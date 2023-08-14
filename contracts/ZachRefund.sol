@@ -26,10 +26,16 @@ contract ZachRefund is Ownable{
     // unbalanced trees, but here we protect against them by checking against msg.sender and only allowing each account to claim once
     // See https://github.com/miguelmota/merkletreejs#notes for more info
     mapping(address=>bool) public claimed;
-    function claim(bytes32[] calldata _merkleProof, uint amount) public payable {
+    function claim(bytes32[] calldata _merkleProof, uint amount) public {
         require(MerkleProof.verify(_merkleProof, merkleRoot, keccak256(abi.encode(msg.sender, amount))) == true, "wrong merkle proof");
         require(claimed[msg.sender] == false, "already claimed");
         claimed[msg.sender] = true;
         token.transfer(msg.sender, amount);
+    }
+
+    function optOutOFRefunds() public {
+        // minimizing all code here to reduce gas costs
+        // its possible to call this after calling claim so anyone analyzing calls needs to check that caller hasnt called claim before
+        claimed[msg.sender] = true;
     }
 }
