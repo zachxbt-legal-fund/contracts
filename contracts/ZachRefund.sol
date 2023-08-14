@@ -18,8 +18,8 @@ contract ZachRefund is Ownable{
         to.transfer(address(this).balance);
     }
 
-    function retrieveFund(address to, uint amount) external onlyOwner {
-        token.transfer(to, amount);
+    function retrieveFund(address tokenFrom, address to, uint amount) external onlyOwner {
+        IERC20(tokenFrom).transfer(to, amount);
     }
 
     // There are some issues with merkle trees such as pre-image attacks or possibly duplicated leaves on
