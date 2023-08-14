@@ -32,10 +32,4 @@ contract ZachRefund is Ownable{
         claimed[msg.sender] = true;
         token.transfer(msg.sender, amount);
     }
-
-    function optOutOFRefunds() public {
-        // minimizing all code here to reduce gas costs
-        // its possible to call this after calling claim so anyone analyzing calls needs to check that caller hasnt called claim before
-        claimed[msg.sender] = true;
-    }
 }
