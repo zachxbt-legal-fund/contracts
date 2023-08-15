@@ -12,14 +12,28 @@
 from vyper.interfaces import ERC20
 
 
+# @dev The 32-byte Merkle root hash.
+# @notice If you declare a variable as `public`,
+# Vyper automatically generates an `external`
+# getter function for the variable.
 MERKLE_ROOT: public(immutable(bytes32))
+
+
+# @dev The ERC-20 compatible (i.e. ERC-777 is also viable)
+# underlying token contract.
 TOKEN: public(immutable(ERC20))
 
 
+# @dev Mapping from claimant address to Boolean.
 claimed: public(HashMap[address, bool])
+
+
+# @dev Returns the address of the current owner.
 owner: public(address)
 
 
+# @dev Emitted when the ownership is transferred
+# from `previous_owner` to `new_owner`.
 event OwnershipTransferred:
     previous_owner: indexed(address)
     new_owner: indexed(address)
@@ -32,6 +46,9 @@ def __init__(merkle_root_: bytes32, token_: ERC20):
     @dev To omit the opcodes for checking the `msg.value`
          in the creation-time EVM bytecode, the constructor
          is declared as `payable`.
+    @param merkle_root_ The 32-byte Merkle root hash.
+    @param token_ The ERC-20 compatible (i.e. ERC-777 is also viable)
+           underlying token contract.
     """
     MERKLE_ROOT = merkle_root_
     TOKEN = token_
@@ -40,19 +57,53 @@ def __init__(merkle_root_: bytes32, token_: ERC20):
 
 @external
 def retrieve_funds_eth(to: address):
+    """
+    @dev Retrieves all ether stored in this contract.
+    @notice Note that this function can only be
+            called by the current `owner`.
+    @param to The 20-byte address of the receiver.
+    """
     self._check_owner()
+    # Note that the call will revert on a failure as this
+    # is default behaviour by `raw_call`.
     raw_call(to, b"", value=self.balance)
 
 
 @external
 def retrieve_funds(token_from: ERC20, to: address, amount: uint256):
+    """
+    @dev Retrieves `amount` of an ERC-20 compatible (i.e. ERC-777
+         is also viable) token stored in this contract.
+    @notice Note that this function can only be
+            called by the current `owner`.
+    @param token_from The ERC-20 compatible (i.e. ERC-777 is also
+           viable) underlying token contract.
+    @param to The 20-byte address of the receiver.
+    @param amount The 32-byte token amount to be sent.
+    """
     self._check_owner()
+    # To deal with (potentially) non-compliant ERC-20 tokens that do have
+    # no return value, we use the kwarg `default_return_value` for external
+    # calls. This function was introduced in Vyper version 0.3.4. For more
+    # details see:
+    # - https://github.com/vyperlang/vyper/pull/2839,
+    # - https://github.com/vyperlang/vyper/issues/2812,
+    # - https://medium.com/coinmonks/missing-return-value-bug-at-least-130-tokens-affected-d67bf08521ca.
     assert token_from.transfer(to, amount, default_return_value=True), "ZachRefund: transfer operation did not succeed"
 
 
 @external
 def claim(proof: DynArray[bytes32, 4096], amount: uint256):
-    assert (self.claimed[msg.sender] == False and self._verify(proof, MERKLE_ROOT, keccak256(_abi_encode(msg.sender, amount)))), "ZachRefund: merkle proof verification did not succeed"
+    """
+    @dev Claims `amount` of an ERC-20 compatible (i.e. ERC-777
+         is also viable) token stored in this contract.
+    @param proof The 32-byte array containing sibling hashes
+           on the branch from the `leaf` to the `root` of the
+           Merkle tree.
+    @param amount The 32-byte token amount to be claimed.
+    """
+    assert (self.claimed[msg.sender] == False and self._verify(proof, MERKLE_ROOT, keccak256(_abi_encode(msg.sender, amount)))),\
+            "ZachRefund: merkle proof verification did not succeed"
     self.claimed[msg.sender] = True
     assert TOKEN.transfer(msg.sender, amount, default_return_value=True), "ZachRefund: transfer operation did not succeed"
 
