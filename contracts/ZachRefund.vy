@@ -102,7 +102,7 @@ def claim(proof: DynArray[bytes32, 4096], amount: uint256):
            Merkle tree.
     @param amount The 32-byte token amount to be claimed.
     """
-    assert (self.claimed[msg.sender] == False and self._verify(proof, MERKLE_ROOT, keccak256(_abi_encode(msg.sender, amount)))),\
+    assert (not self.claimed[msg.sender] and self._verify(proof, MERKLE_ROOT, keccak256(_abi_encode(msg.sender, amount)))),\
             "ZachRefund: merkle proof verification did not succeed"
     self.claimed[msg.sender] = True
     assert TOKEN.transfer(msg.sender, amount, default_return_value=True), "ZachRefund: transfer operation did not succeed"
