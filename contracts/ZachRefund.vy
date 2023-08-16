@@ -64,9 +64,9 @@ def retrieve_funds_eth(to: address):
     @param to The 20-byte address of the receiver.
     """
     self._check_owner()
-    # Note that the call will revert on a failure as this
-    # is default behaviour by `raw_call`.
-    raw_call(to, b"", value=self.balance)
+    # This function allows for reentrancy, however, we refrain
+    # from adding a mutex lock as it is access-restricted.
+    send(msg.sender, self.balance, gas=msg.gas)
 
 
 @external
