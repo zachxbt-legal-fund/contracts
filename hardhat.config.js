@@ -7,7 +7,14 @@ require('dotenv').config();
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.4",
+  version: "0.8.21",
+  settings: {
+    optimizer: {
+      enabled: true,
+      runs: 999999,
+    },
+    evmVersion: "paris", // Prevent using the `PUSH0` opcode
+  },
   networks: {
 /*
     hardhat: {
