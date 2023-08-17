@@ -13,7 +13,8 @@
     "hardhat-gas-reporter": "^1.0.7"
   },
   "scripts": {
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "build": "hardhat compile"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.3",

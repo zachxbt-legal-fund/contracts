@@ -7,26 +7,44 @@ function paddedBuffer(addr, amount){
     //const bigint = BigInt(int + (decimals??'').slice(0, 18).padEnd(18, '0'))
     const bigint = BigInt(Number((Number(amount)*1e18).toFixed(0))) // some precision loss
     const buf = Buffer.from(addr.substr(2).padStart(32*2, "0")+bigint.toString(16).padStart(32*2, "0"), "hex")
-    return Buffer.concat([buf]);
+    return {
+        leaf: keccak256(Buffer.concat([buf])),
+        amount: bigint.toString()
+    }
+}
+
+function buildTree() {
+    const balances = {}
+    fs.readFileSync("./scripts/shitcoin-donations.csv", "utf-8").split("\n").slice(1).map(r=>{
+        const row = r.split(',')
+        balances[row[0]] = Number(row[1]) * 1716.91// ETH Price at https://etherscan.io/tx/0xecdbe3a2baa2c62b8840c316676e2210bf9a9ddf81fc14b851ca36ff0e14e5f2
+    })
+    fs.readFileSync("./scripts/hildoby-dune.csv", "utf-8").split("\n").slice(1).map(r=>{
+        const row = r.split(',')
+        const amount = row[5].length===0?'0':row[5]
+        const address= row[1].slice('<a href="https://etherscan.io/address/'.length+2, '<a href="https://etherscan.io/address/0x37582978b1aba3a076d398ef624bf680816aaa39'.length+2)
+        balances[address] = (balances[address] ?? 0) + Number(amount)
+    })
+    const csv = Object.entries(balances).map(([address, amount])=>({address, amount}))
+    const tree = new MerkleTree(csv.map(x => paddedBuffer(x.address, x.amount).leaf), keccak256, { sort: true })
+    return {tree, csv}
+}
+
+module.exports={
+    buildTree,
+    paddedBuffer
 }
 
 async function main() {
-    const csv = fs.readFileSync("./scripts/hildoby-dune.csv", "utf-8").split("\n").slice(1).map(r=>{
-        const row = r.split(',')
-        return {
-            amount: row[5].length===0?'0':row[5],
-            address: row[1].slice('<a href="https://etherscan.io/address/'.length, '<a href="https://etherscan.io/address/0x37582978b1aba3a076d398ef624bf680816aaa39'.length)
-        }
-    })
-    const tree = new MerkleTree(csv.map(x => paddedBuffer(x.address, x.amount)), keccak256, { sort: true })
+    const {tree, csv} = buildTree()
     console.log("root", tree.getHexRoot())
     const proofs = {}
-    for(const {address, amount} of csv){
-        const leaf = paddedBuffer(address, amount)
+    for(const {address, amount: amountNum} of csv){
+        const {leaf, amount} = paddedBuffer(address, amountNum)
         const proof = tree.getHexProof(leaf)
-        proofs[address]=proof
+        proofs[address] = {proof, amount}
     }
     fs.writeFileSync("proofs.json", JSON.stringify(proofs))
 }
 
-main()
+//main()

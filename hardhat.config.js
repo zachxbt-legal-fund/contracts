@@ -7,7 +7,9 @@ require('dotenv').config();
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  version: "0.8.21",
+  solidity:{
+    version: "0.8.21",
+  },
   settings: {
     optimizer: {
       enabled: true,
@@ -22,7 +24,7 @@ module.exports = {
         url: process.env.RPC
       }
     },
-*/
+
     mainnet: {
       url: process.env.RPC,
       accounts: [process.env.PRIVATEKEY]
@@ -31,6 +33,7 @@ module.exports = {
       url: process.env.RINKEBY_RPC,
       accounts: [process.env.PRIVATEKEY]
     },
+    */
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN
