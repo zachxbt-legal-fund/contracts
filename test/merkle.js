@@ -32,12 +32,29 @@ describe("Merkle tree", function () {
         });
         const {leaf, amount} = paddedBuffer(donorAddress, donorAmount)
         const proof = tree.getHexProof(leaf)
+        
+        // Verify donor received the tokens
         await refund.connect(donor).claim(proof, amount)
+        const donorBalance = await token.balanceOf(donorAddress);
+        expect(donorBalance).to.equal(amount);
+
+        // Verify future claims will fail
         await expect(
             refund.connect(donor).claim(proof, amount)
         ).to.be.revertedWith('MerkleVerificationFail()');
         await expect(
             refund.connect(attacker).claim(proof, amount)
         ).to.be.revertedWith('MerkleVerificationFail()');
+
+        // Only owner can retrieve funds
+        await expect(
+            refund.connect(attacker).retrieveFunds(token.address, signer.address, ethers.utils.parseEther("1.5"))
+        ).to.be.revertedWith('Ownable: caller is not the owner');
+        
+        // Check that owner can retrieve remaining funds
+        const startingBalance = await token.balanceOf(signer.address);
+        await refund.connect(signer).retrieveFunds(token.address, signer.address, ethers.utils.parseEther("1.5"));
+        const finalBalance = await token.balanceOf(signer.address);
+        expect(finalBalance.sub(startingBalance)).to.equal(ethers.utils.parseEther("1.5"));
     })
 })
