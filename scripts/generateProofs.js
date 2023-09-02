@@ -6,7 +6,7 @@ const { getAddress } = require('ethers/lib/utils');
 function paddedBuffer(addr, amount){
     //const [int, decimals] = amount.split('.')
     //const bigint = BigInt(int + (decimals??'').slice(0, 18).padEnd(18, '0'))
-    const bigint = BigInt(Number((Number(amount)*1e18).toFixed(0))) // some precision loss
+    const bigint = BigInt(Number((Number(amount)*1e6).toFixed(0))) // some precision loss
     const buf = Buffer.from(addr.substr(2).padStart(32*2, "0")+bigint.toString(16).padStart(32*2, "0"), "hex")
     return {
         leaf: keccak256(Buffer.concat([buf])),
