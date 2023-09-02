@@ -1,6 +1,7 @@
 const { MerkleTree } = require('merkletreejs')
 const keccak256 = require('keccak256')
 const fs = require('fs');
+const { getAddress } = require('ethers/lib/utils');
 
 function paddedBuffer(addr, amount){
     //const [int, decimals] = amount.split('.')
@@ -18,7 +19,7 @@ function buildTree() {
     fs.readFileSync("./scripts/hildoby-dune.csv", "utf-8").split("\n").slice(1).map(r=>{
         const row = r.split(',')
         const amount = row[5].length===0?'0':row[5]
-        const address= row[1].slice('<a href="https://etherscan.io/address/'.length+2, '<a href="https://etherscan.io/address/0x37582978b1aba3a076d398ef624bf680816aaa39'.length+2)
+        const address= getAddress(row[1].slice('<a href="https://etherscan.io/address/'.length+2, '<a href="https://etherscan.io/address/0x37582978b1aba3a076d398ef624bf680816aaa39'.length+2))
         balances[address] = Number(amount)
     })
     const csv = Object.entries(balances).map(([address, amount])=>({address, amount: amount * 1.078/1.228}))
