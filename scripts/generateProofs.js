@@ -18,6 +18,9 @@ function buildTree() {
     const balances = {}
     fs.readFileSync("./scripts/hildoby-dune.csv", "utf-8").split("\n").slice(1).map(r=>{
         const row = r.split(',')
+        if(row[2] === "CEX"){
+            return
+        }
         const amount = row[5].length===0?'0':row[5]
         const address= getAddress(row[1].slice('<a href="https://etherscan.io/address/'.length+2, '<a href="https://etherscan.io/address/0x37582978b1aba3a076d398ef624bf680816aaa39'.length+2))
         balances[address] = Number(amount)
@@ -42,6 +45,7 @@ async function main() {
         proofs[address] = {proof, amount}
     }
     fs.writeFileSync("proofs.json", JSON.stringify(proofs))
+    process.exit(0)
 }
 
 //main()
