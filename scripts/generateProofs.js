@@ -15,15 +15,11 @@ function paddedBuffer(addr, amount){
 
 function buildTree() {
     const balances = {}
-    fs.readFileSync("./scripts/shitcoin-donations.csv", "utf-8").split("\n").slice(1).map(r=>{
-        const row = r.split(',')
-        balances[row[0]] = Number(row[1]) * 1716.91// ETH Price at https://etherscan.io/tx/0xecdbe3a2baa2c62b8840c316676e2210bf9a9ddf81fc14b851ca36ff0e14e5f2
-    })
     fs.readFileSync("./scripts/hildoby-dune.csv", "utf-8").split("\n").slice(1).map(r=>{
         const row = r.split(',')
         const amount = row[5].length===0?'0':row[5]
         const address= row[1].slice('<a href="https://etherscan.io/address/'.length+2, '<a href="https://etherscan.io/address/0x37582978b1aba3a076d398ef624bf680816aaa39'.length+2)
-        balances[address] = (balances[address] ?? 0) + Number(amount)
+        balances[address] = Number(amount)
     })
     const csv = Object.entries(balances).map(([address, amount])=>({address, amount: amount * 1.078/1.228}))
     const tree = new MerkleTree(csv.map(x => paddedBuffer(x.address, x.amount).leaf), keccak256, { sort: true })
