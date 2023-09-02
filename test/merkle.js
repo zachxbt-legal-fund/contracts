@@ -1,6 +1,8 @@
+const fs = require('fs');
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const { buildTree, paddedBuffer } = require("../scripts/generateProofs");
+const { getAddress } = require('ethers/lib/utils');
+const { REDUCTION_RATIO, buildTree, paddedBuffer } = require("../scripts/generateProofs");
 
 async function deployContract(name, params = []) {
     const Contract = await ethers.getContractFactory(name);
@@ -9,8 +11,8 @@ async function deployContract(name, params = []) {
     return contract
 }
 
-const donorAddress = "0xed6b3dc95e6e41156cde61a206668935d7e958a4" // random addy from csv
-const donorAmount = 687.316
+const donorAddress = "0xed6b3dc95E6E41156cde61A206668935d7e958a4" // random addy from csv
+const donorAmount = 687.316 * REDUCTION_RATIO
 
 describe("Merkle tree", function () {
     it("works on-chain", async function () {
@@ -56,5 +58,18 @@ describe("Merkle tree", function () {
         await refund.connect(signer).retrieveFunds(token.address, signer.address, ethers.utils.parseEther("1.5"));
         const finalBalance = await token.balanceOf(signer.address);
         expect(finalBalance.sub(startingBalance)).to.equal(ethers.utils.parseEther("1.5"));
-    })
-})
+    });
+});
+
+// describe("Validate all entries in the Merkle Tree", function() {
+//     const balances = {}
+//     fs.readFileSync("./scripts/hildoby-dune.csv", "utf-8").split("\n").slice(1).map(r=>{
+//         const row = r.split(',')
+//         if(row[2] === "CEX"){
+//             return
+//         }
+//         const amount = row[5].length===0?'0':row[5]
+//         const address = getAddress(row[1].slice('<a href="https://etherscan.io/address/'.length+2, '<a href="https://etherscan.io/address/0x37582978b1aba3a076d398ef624bf680816aaa39'.length+2))
+//         balances[address] = Number(amount)
+//     })
+// });

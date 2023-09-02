@@ -3,6 +3,8 @@ const keccak256 = require('keccak256')
 const fs = require('fs');
 const { getAddress } = require('ethers/lib/utils');
 
+const REDUCTION_RATIO = 1.078 / 1.228;
+
 function paddedBuffer(addr, amount){
     //const [int, decimals] = amount.split('.')
     //const bigint = BigInt(int + (decimals??'').slice(0, 18).padEnd(18, '0'))
@@ -22,17 +24,18 @@ function buildTree() {
             return
         }
         const amount = row[5].length===0?'0':row[5]
-        const address= getAddress(row[1].slice('<a href="https://etherscan.io/address/'.length+2, '<a href="https://etherscan.io/address/0x37582978b1aba3a076d398ef624bf680816aaa39'.length+2))
+        const address = getAddress(row[1].slice('<a href="https://etherscan.io/address/'.length+2, '<a href="https://etherscan.io/address/0x37582978b1aba3a076d398ef624bf680816aaa39'.length+2))
         balances[address] = Number(amount)
     })
-    const csv = Object.entries(balances).map(([address, amount])=>({address, amount: amount * 1.078/1.228}))
+    const csv = Object.entries(balances).map(([address, amount])=>({address, amount: amount * REDUCTION_RATIO}))
     const tree = new MerkleTree(csv.map(x => paddedBuffer(x.address, x.amount).leaf), keccak256, { sort: true })
     return {tree, csv}
 }
 
 module.exports={
     buildTree,
-    paddedBuffer
+    paddedBuffer,
+    REDUCTION_RATIO
 }
 
 async function main() {
