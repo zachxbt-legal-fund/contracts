@@ -6,6 +6,13 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @title Refund Contract for ZachXBT Legal Case
+ * @author 0xngmi (https://twitter.com/0xngmi)
+ * @custom:coauthor cygaar (https://twitter.com/0xCygaar)
+ * @custom:contributor pcaversaccio (https://pcaversaccio.com)
+ * @custom:security-contact 0xngmi <0xngmi@protonmail.com>
+ */
 contract ZachRefund is Ownable {
     using SafeERC20 for IERC20;
     using MerkleProof for bytes32[];
@@ -13,7 +20,7 @@ contract ZachRefund is Ownable {
     bytes32 public immutable MERKLE_ROOT;
     IERC20 public immutable TOKEN;
 
-    mapping(address => bool) public claimed;
+    mapping(address claimant => bool flag) public claimed;
 
     error EtherTransferFail();
     error MerkleVerificationFail();
@@ -40,9 +47,14 @@ contract ZachRefund is Ownable {
         tokenFrom.safeTransfer(to, amount);
     }
 
-    // There are some issues with merkle trees such as pre-image attacks or possibly duplicated leaves on
-    // unbalanced trees, but here we protect against them by checking against msg.sender and only allowing each account to claim once
-    // See https://github.com/miguelmota/merkletreejs#notes for more info
+    /**
+     * @dev There are some issues with Merkle trees such as pre-image attacks or
+     * possibly duplicated leaves on unbalanced trees, but here we protect against
+     * them by checking against `msg.sender` and only allowing each account to claim once.
+     *
+     * For more in-depth information see here:
+     * https://github.com/miguelmota/merkletreejs#notes.
+     */
     function claim(bytes32[] calldata merkleProof, uint256 amount) public {
         if (!merkleProof.verifyCalldata(MERKLE_ROOT, keccak256(abi.encode(msg.sender, amount))) || claimed[msg.sender])
         {
