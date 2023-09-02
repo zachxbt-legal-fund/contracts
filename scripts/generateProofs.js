@@ -3,7 +3,7 @@ const keccak256 = require('keccak256')
 const fs = require('fs');
 const { getAddress } = require('ethers/lib/utils');
 
-const REDUCTION_RATIO = 1.078 / 1.274;
+const REDUCTION_RATIO = 1.096 / 1.274;
 
 function paddedBuffer(addr, amount){
     //const [int, decimals] = amount.split('.')
