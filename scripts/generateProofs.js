@@ -16,17 +16,29 @@ function paddedBuffer(addr, amount){
     }
 }
 
-function buildTree() {
+function buildTree(chain = "ethereum") {
     const balances = {}
-    fs.readFileSync("./scripts/hildoby-dune.csv", "utf-8").split("\n").slice(1).map(r=>{
-        const row = r.split(',')
-        if(row[2] === "CEX"){
-            return
-        }
-        const amount = row[5].length===0?'0':row[5]
-        const address = getAddress(row[1].slice('<a href="https://etherscan.io/address/'.length+2, '<a href="https://etherscan.io/address/0x37582978b1aba3a076d398ef624bf680816aaa39'.length+2))
-        balances[address] = Number(amount)
-    })
+    if(chain === "ethereum"){
+        fs.readFileSync("./scripts/final-lists/eth.csv", "utf-8").split("\n").slice(1).map(r=>{
+            const row = r.split(',')
+            if(row[3] !== ""){
+                return
+            }
+            const amount = row[4].length===0?'0':row[4]
+            const address = getAddress(row[2])
+            balances[address] = Number(amount)
+        })
+    } else if(chain === "arbitrum"){
+        fs.readFileSync("./scripts/final-lists/arbi.csv", "utf-8").split("\n").slice(1).map(r=>{
+            const row = r.split(',')
+            if(row[4] !== ""){
+                return // excluded
+            }
+            const amount = row[3].length===0?'0':row[3]
+            const address = getAddress(row[0])
+            balances[address] = Number(amount)
+        })
+    }
     const csv = Object.entries(balances).map(([address, amount])=>({address, amount: amount * REDUCTION_RATIO}))
     const tree = new MerkleTree(csv.map(x => paddedBuffer(x.address, x.amount).leaf), keccak256, { sort: true })
     return {tree, csv}
