@@ -31,7 +31,7 @@ function buildTree(chain = "ethereum") {
     } else if(chain === "arbitrum"){
         fs.readFileSync("./scripts/final-lists/arbi.csv", "utf-8").split("\n").slice(1).map(r=>{
             const row = r.split(',')
-            if(row[4] !== ""){
+            if(row[4].includes("x")){
                 return // excluded
             }
             const amount = row[3].length===0?'0':row[3]
@@ -44,22 +44,28 @@ function buildTree(chain = "ethereum") {
     return {tree, csv}
 }
 
-module.exports={
-    buildTree,
-    paddedBuffer,
-    REDUCTION_RATIO
-}
-
-async function main() {
-    const {tree, csv} = buildTree()
-    console.log("root", tree.getHexRoot())
+function storeTree(chain = "ethereum") {
+    const {tree, csv} = buildTree(chain)
     const proofs = {}
     for(const {address, amount: amountNum} of csv){
         const {leaf, amount} = paddedBuffer(address, amountNum)
         const proof = tree.getHexProof(leaf)
         proofs[address] = {proof, amount}
     }
-    fs.writeFileSync("proofs.json", JSON.stringify(proofs))
+    fs.writeFileSync(`proofs_${chain}.json`, JSON.stringify(proofs))
+    return tree.getHexRoot()
+}
+
+module.exports={
+    buildTree,
+    paddedBuffer,
+    REDUCTION_RATIO,
+    storeTree
+}
+
+async function main() {
+    const root = storeTree("ethereum")
+    console.log("root", root)
     process.exit(0)
 }
 
